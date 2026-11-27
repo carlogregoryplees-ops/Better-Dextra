@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Dextra</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#116466">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=Inter:wght@400;500&display=swap">
+<style>
+:root{--bg:#eef5f3;--panel:#fff;--ink:#2c3531;--mute:#5d6b66;--acc:#116466;--acc2:#d9b08c;--hi:#ffcb9a;--soft:#d1e8e2;--line:#c5dad4;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root[data-t="dark"]{--bg:#1b2220;--panel:#252e2b;--ink:#e6f1ee;--mute:#9fb3ad;--acc:#2aa3a5;--line:#36423e;--soft:#2c3935}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif;display:flex}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;font-weight:600;margin:0}
+nav{width:190px;padding:28px 14px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:4px;flex:none}
+nav .logo{font:600 26px Fraunces,Georgia,serif;padding:0 12px 18px;color:var(--acc)}
+nav button{all:unset;cursor:pointer;padding:10px 12px;border-radius:10px;color:var(--mute)}
+nav button.on{background:var(--soft);color:var(--ink);box-shadow:inset 3px 0 0 var(--acc2)}
+main{flex:1;min-width:0;overflow:auto;padding:28px clamp(16px,4vw,56px)}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.ghost{all:unset;cursor:pointer;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.btn{all:unset;cursor:pointer;padding:9px 16px;border-radius:10px;background:var(--acc);color:#fff}
+.btn.s{background:var(--acc2);color:#2c3531}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;margin:14px 0}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input,textarea,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 12px;outline:0}
+input:focus,textarea:focus{border-color:var(--acc)}
+.sub{color:var(--mute)}
+.msgs{display:flex;flex-direction:column;gap:10px;margin:14px 0;max-height:46vh;overflow:auto}
+.m{padding:10px 14px;border-radius:14px;max-width:85%;white-space:pre-wrap}
+.m.u{align-self:flex-end;background:var(--acc);color:#fff}
+.m.a{align-self:flex-start;background:var(--soft)}
+.m small{display:block;margin-top:6px}
+.compose{display:flex;gap:8px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:28px;padding:6px 6px 6px 14px}
+.compose input{flex:1;border:0;background:transparent}
+.round{all:unset;cursor:pointer;width:38px;height:38px;border-radius:50%;background:var(--acc);color:#fff;text-align:center;line-height:38px}
+.chips span{display:inline-block;padding:3px 9px;border-radius:99px;background:var(--soft);margin:2px;font-size:13px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{all:unset;cursor:pointer;padding:6px 12px}
+.seg button.on{background:var(--acc);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.day{min-height:70px;border:1px solid var(--line);border-radius:8px;padding:4px;font-size:12px;background:var(--panel)}
+.day.today{border-color:var(--acc2);box-shadow:inset 0 0 0 1px var(--acc2)}.day.x{opacity:.4}
+.ev{background:var(--hi);color:#2c3531;border-radius:5px;padding:1px 4px;margin-top:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.clock{font:600 44px Fraunces,Georgia,serif;color:var(--acc)}
+#set{position:fixed;top:0;right:0;bottom:0;width:min(360px,100%);background:var(--panel);border-left:1px solid var(--line);padding:22px;overflow:auto;transform:translateX(105%);transition:.25s;z-index:20;padding-top:calc(22px + env(safe-area-inset-top,0px))}
+#set.open{transform:none}
+#set h3{margin:18px 0 6px;font-size:16px}
+.li{display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+.li span{flex:1}.done span{text-decoration:line-through;color:var(--mute)}
+.x1{all:unset;cursor:pointer;color:var(--mute)}
+@media(max-width:700px){body{flex-direction:column-reverse}nav{width:100%;flex-direction:row;overflow-x:auto;border-right:0;border-top:1px solid var(--line);padding:6px}nav .logo{display:none}nav button{white-space:nowrap}main{padding:18px 14px}.day{min-height:54px}}
+</style>
+</head>
+<body>
+<nav id="nav"></nav>
+<main id="main"></main>
+<aside id="set"></aside>
+<script>
+(function(){
+var TZ=[["België","Europe/Brussels"],["Verenigd Koninkrijk","Europe/London"],["VS (New York)","America/New_York"],["VS (Los Angeles)","America/Los_Angeles"],["Japan","Asia/Tokyo"],["Australië","Australia/Sydney"],["Turkije","Europe/Istanbul"],["Marokko","Africa/Casablanca"]];
+var PL={Mol:[51.19,5.11,"2400"],Geel:[51.16,4.99,"2440"],Hulshout:[51.06,4.79,"2235"]};
+var AG=[{name:"Agenda-agent",job:"beheert de agenda, voegt toe en past aan",on:true},{name:"Nieuws-agent",job:"zoekt economienieuws met bronlink",on:false},{name:"Mail-agent",job:"volgt later jouw instructies voor mail (nog niet gekoppeld)",on:false},{name:"Weer-agent",job:"weerbericht en neerslaggrafiek",on:false}];
+var T={nl:{Dextra:"Dextra",Nieuws:"Nieuws",Taken:"Taken",Mail:"Mail",Agenda:"Agenda",ask:"Vraag het aan Dextra…",set:"Instellingen",save:"Bewaar",lang:"Taal",tone:"Stijl",dry:"Droog",loose:"Persoonlijk",theme:"Thema",auto:"Auto",light:"Licht",dark:"Donker",agents:"Agents",noag:"Geen extra agents. Vraag Dextra om er een te maken.",dict:"Woordenboek",abbr:"Afkorting",mean:"Betekenis",add:"Toevoegen",sync:"Synchroniseer",notes:"Notities voor Claude",copy:"Kopieer lijst",brief:"Briefing",gen:"Ochtendbriefing",gen2:"Avondbriefing",task:"Nieuwe taak",school:"School",priv:"Privé",week:"Week",month:"Maand",mailt:"Mail is nog niet gekoppeld. Dat doen we samen in een volgende stap.",ev:"Titel",think:"Dextra denkt na…",att:"Bijlage",mem:"Onthouden",files:"bestand(en) toegevoegd",sr:"Zon op",ss:"Zon onder"},
+en:{Dextra:"Dextra",Nieuws:"News",Taken:"Tasks",Mail:"Mail",Agenda:"Calendar",ask:"Ask Dextra…",set:"Settings",save:"Save",lang:"Language",tone:"Style",dry:"Dry",loose:"Personal",theme:"Theme",auto:"Auto",light:"Light",dark:"Dark",agents:"Agents",noag:"No extra agents. Ask Dextra to create one.",dict:"Dictionary",abbr:"Abbreviation",mean:"Meaning",add:"Add",sync:"Sync",notes:"Notes for Claude",copy:"Copy list",brief:"Briefing",gen:"Morning briefing",gen2:"Evening briefing",task:"New task",school:"School",priv:"Private",week:"Week",month:"Month",mailt:"Mail is not connected yet. We will do that together in a later step.",ev:"Title",think:"Dextra is thinking…",att:"Attachment",mem:"Remember",files:"file(s) attached",sr:"Sunrise",ss:"Sunset"}};
+var D={lang:"nl",tone:"dry",theme:"auto",place:"Mol",tz:"Europe/Brussels",cal:"month",tasks:[],events:[],dict:[],mem:[],notes:[],agents:[],chat:[],brief:null,news:null};
+var WX={},S=JSON.parse(JSON.stringify(D)),tab="Dextra",off=0,files=[],busy=false,timer=null;
+function t(k){return T[S.lang][k]||k}
+function $(s,r){return (r||document).querySelector(s)}
+function el(tag,p,kids){var e=document.createElement(tag);for(var k in (p||{})){if(k==="text")e.textContent=p[k];else if(k.slice(0,2)==="on")e.addEventListener(k.slice(2),p[k]);else if(k==="cls")e.className=p[k];else if(p[k]!==null)e.setAttribute(k,p[k])}(kids||[]).forEach(function(c){if(c)e.appendChild(c)});return e}
+function iso(d){var m=d.getMonth()+1,x=d.getDate();return d.getFullYear()+"-"+(m<10?"0":"")+m+"-"+(x<10?"0":"")+x}
+function pin(){var p=localStorage.getItem("dpin");if(!p){p=prompt("PIN voor Dextra");if(p)localStorage.setItem("dpin",p)}return p||""}
+async function api(path,opt){opt=opt||{};opt.headers=Object.assign({"x-pin":pin(),"content-type":"application/json"},opt.headers||{});var r=await fetch(path,opt),j={};try{j=await r.json()}catch(e){}if(r.status===401){localStorage.removeItem("dpin");throw {code:"pin",message:"PIN onjuist"}}if(!r.ok)throw {code:"api",message:j.error||("status "+r.status)};return j}
+function save(){try{localStorage.setItem("dextra",JSON.stringify(S))}catch(e){}clearTimeout(timer);timer=setTimeout(function(){api("/api/state",{method:"PUT",body:JSON.stringify(S)}).catch(function(){})},800)}
+function merge(o){for(var k in D)if(o&&o[k]!==undefined)S[k]=o[k]}
+function sun(){var p=PL[S.place],n=new Date(),y0=new Date(n.getFullYear(),0,0),N=Math.floor((n-y0)/864e5),r=Math.PI/180,B=r*360/365*(N-81),dec=23.44*Math.sin(B)*r,eot=9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B),c=(Math.sin(-.833*r)-Math.sin(p[0]*r)*Math.sin(dec))/(Math.cos(p[0]*r)*Math.cos(dec)),H=Math.acos(Math.max(-1,Math.min(1,c)))/r,noon=720-4*p[1]-eot,mid=Date.UTC(n.getFullYear(),n.getMonth(),n.getDate());return{rise:new Date(mid+(noon-4*H)*6e4),set:new Date(mid+(noon+4*H)*6e4)}}
+function fmt(d,tz){return d.toLocaleTimeString(S.lang==="nl"?"nl-BE":"en-GB",{hour:"2-digit",minute:"2-digit",timeZone:tz||S.tz})}
+function theme(){var m=S.theme,d=m==="dark";if(m==="auto"){var s=sun(),n=new Date();d=n<s.rise||n>s.set}document.documentElement.setAttribute("data-t",d?"dark":"light")}
+function greet(){var h=+new Date().toLocaleString("en-GB",{hour:"2-digit",hour12:false,timeZone:"Europe/Brussels"});var nl=h<6?"Goedenacht":h<12?"Goedemorgen":h<18?"Goedemiddag":"Goedenavond",en=h<6?"Good night":h<12?"Good morning":h<18?"Good afternoon":"Good evening";return (S.lang==="nl"?nl:en)+", Carlo."}
+function dn(s){var d=new Date(s);return isNaN(d)?String(s||""):d.toLocaleDateString(S.lang==="nl"?"nl-BE":"en-GB",{weekday:"short",day:"numeric",month:"short"})}
+function ctx(){var td=iso(new Date());return "Today: "+new Date().toLocaleString("en-GB",{timeZone:"Europe/Brussels"})+" (Belgium, "+S.place+"). Open tasks: "+JSON.stringify(S.tasks.filter(function(x){return!x.done}))+". Events: "+JSON.stringify(S.events.filter(function(e){return e.date>=td}).slice(0,25))+". Dictionary: "+JSON.stringify(S.dict)+". Memories: "+JSON.stringify(S.mem)+". Agents: "+JSON.stringify(AG.concat(S.agents))+". Sunrise/sunset today in "+S.place+" (calculated): "+fmt(sun().rise,"Europe/Brussels")+" / "+fmt(sun().set,"Europe/Brussels")+". Weather (source Buienradar, fetched "+(WX.at||"never")+"): "+(WX.weer?JSON.stringify({rapport:WX.weer.rapport,dagen:WX.weer.dagen}):"no data")+". Rain next 2h at "+S.place+": "+(WX.regen?JSON.stringify(WX.regen):"no data")+". News: "+(S.news&&S.news.items&&S.news.items.length?JSON.stringify(S.news.items.map(function(n){return{title:n.title,source:n.source,url:n.url}})):"no data")+". Mail: not connected."}
+function persona(){return "You are Dextra, Carlo's personal assistant in the style of Jarvis: sharp, loyal, quick. You understand humour and sarcasm and may use some. "+(S.tone==="dry"?"Tone: dry, concise, deadpan wit, no small talk.":"Tone: personal, loose, warm, playful, a bit chatty.")+" Reply language: "+(S.lang==="nl"?"Dutch (Flemish), formal: address Carlo with u, never je/jij.":"English.")+" Keep answers short and concrete. STRICT: never invent facts, numbers, news, weather, links or sources. Use only the context given here. If data is missing, say so plainly and name the agent that would have to supply it."}
+async function ask(p){return api("/api/chat",{method:"POST",body:JSON.stringify({prompt:p})})}
+function errMsg(e){return e&&e.code==="pin"?"PIN onjuist. / Wrong PIN.":"Er ging iets mis: "+((e&&e.message)||"onbekend")}
+function add(role,text,extra){S.chat.push({r:role,t:text,x:extra||""});if(S.chat.length>60)S.chat=S.chat.slice(-60);save()}
+async function send(txt){
+ if(busy||(!txt&&!files.length))return;
+ busy=true;var names=files.map(function(f){return f.name}),parts=[];
+ for(var i=0;i<files.length;i++){var f=files[i];if(f.type.indexOf("image/")===0)parts.push("[Image "+f.name+" attached but images are not supported yet]");else if(f.size<2e5){try{parts.push("[File "+f.name+"]\n"+(await f.text()).slice(0,8000))}catch(e){}}else parts.push("[File "+f.name+" too large to read]")}
+ add("u",txt||"",names.length?"+ "+names.join(", "):"");files=[];render();
+ var hist=S.chat.slice(-9,-1).map(function(m){return(m.r==="u"?"Carlo: ":"Dextra: ")+m.t}).join("\n");
+ var prompt=persona()+"\n\nContext: "+ctx()+"\n\nHistory:\n"+hist+"\n\nCarlo: "+(txt||"(see attachments)")+"\n"+parts.join("\n")+"\n\nRespond ONLY with JSON: {\"reply\":string,\"actions\":[...]}. Allowed actions: {\"type\":\"event\",\"title\":string,\"date\":\"YYYY-MM-DD\",\"time\":\"HH:MM or empty\"}, {\"type\":\"task\",\"title\":string,\"kind\":\"school|private\"}, {\"type\":\"dict\",\"abbr\":string,\"meaning\":string}, {\"type\":\"agent\",\"name\":string,\"job\":string}. Use actions only when Carlo asks for it or defines an abbreviation. Resolve relative dates from today.";
+ try{
+  var r=await ask(prompt),tx=(r.text||"").replace(/```json|```/g,"").trim(),j;
+  try{j=JSON.parse(tx)}catch(e){j={reply:tx,actions:[]}}
+  var done=[];(j.actions||[]).forEach(function(a){
+   if(a.type==="event"&&a.title&&a.date){S.events.push({title:a.title,date:a.date,time:a.time||""});done.push("+ "+t("Agenda")+": "+a.title)}
+   if(a.type==="task"&&a.title){S.tasks.push({title:a.title,kind:a.kind==="school"?"school":"private",done:false});done.push("+ "+t("Taken")+": "+a.title)}
+   if(a.type==="dict"&&a.abbr){S.dict.push({a:a.abbr,m:a.meaning||""});done.push("+ "+a.abbr)}
+   if(a.type==="agent"&&a.name){S.agents.push({name:a.name,job:a.job||""});done.push("+ agent: "+a.name)}});
+  add("a",j.reply||"…",done.join("\n"))
+ }catch(e){add("a",errMsg(e))}
+ busy=false;render()}
+async function briefing(k){busy=true;render();
+ try{var r=await ask(persona()+"\n\nContext: "+ctx()+"\n\nWrite Carlo's "+(k==="e"?"evening briefing: focus on tomorrow (weather, agenda, open tasks)":"morning briefing")+" in at most 8 sentences. Cover in this order: date and sunrise/sunset, weather, agenda for the coming days, open tasks (school and private), news, mail. For every part where the context has no data, say in a short phrase that no data is available yet. Invent nothing. End with one dry or witty remark. Plain text only, no lists.");S.brief={date:iso(new Date()),text:r.text,k:k};save()}catch(e){S.brief={date:iso(new Date()),text:errMsg(e),k:k}}
+ busy=false;render()}
+async function loadWx(){try{var a=await Promise.all([api("/api/weer"),api("/api/regen?place="+S.place)]);WX={weer:a[0],regen:a[1].data,at:new Date().toLocaleTimeString("nl-BE"),place:S.place};AG[3].on=true}catch(e){WX={err:(e&&e.message)||"niet bereikbaar"};AG[3].on=false}var i=$("#inp");if(tab==="Dextra"&&!busy&&(!i||!i.value))render()}
+async function loadNews(){busy=true;render();
+ try{var r=await api("/api/nieuws"),it=r.items||[];AG[1].on=true;
+  var ans=await ask("Use ONLY these articles. Reply language: "+(S.lang==="nl"?"Dutch":"English")+". Return ONLY JSON: {\"summary\":string (max 5 sentences about these articles),\"words\":[{\"word\":string,\"explanation\":string} x3: difficult economic terms that occur in these articles]}. Never add facts that are not in the articles. Articles: "+JSON.stringify(it.map(function(n){return{title:n.title,summary:n.summary,source:n.source}})));
+  var j;try{j=JSON.parse(ans.text.replace(/```json|```/g,"").trim())}catch(e){j={}}
+  S.news={items:it,summary:j.summary||"",words:j.words||[],at:Date.now()};save()}
+ catch(e){AG[1].on=false;S.news={items:[],summary:"Nieuws-agent: "+((e&&e.message)||"niet bereikbaar"),words:[]}}
+ busy=false;render()}
+function toggle(opts,cur,fn){return el("div",{cls:"seg"},opts.map(function(o){return el("button",{cls:cur===o[0]?"on":"",text:o[1],onclick:function(){fn(o[0])}})}))}
+function setv(k,v){S[k]=v;save();theme();render()}
+function rainChart(d){var wrap=el("div",{style:"margin:12px 0"}),tip=el("div",{cls:"sub",text:S.lang==="nl"?"Neerslag komende 2 uur in "+S.place+". Tik of beweeg over de grafiek.":"Rain next 2 hours in "+S.place+". Tap or hover the chart."}),W=480,H=110,mx=Math.max(1,Math.max.apply(null,d.map(function(x){return x.mmh}))),bw=W/d.length,ns="http://www.w3.org/2000/svg",s=document.createElementNS(ns,"svg");s.setAttribute("viewBox","0 0 "+W+" "+(H+18));s.style.width="100%";
+ d.forEach(function(x,i){var h=Math.max(2,x.mmh/mx*H),r=document.createElementNS(ns,"rect");r.setAttribute("x",i*bw+1);r.setAttribute("y",H-h);r.setAttribute("width",bw-2);r.setAttribute("height",h);r.setAttribute("rx",2);r.setAttribute("style","fill:"+(x.mmh>0?"var(--acc)":"var(--line)"));
+  var f=function(){tip.textContent=x.time+": "+x.mmh+" mm/u"+(x.mmh===0?" (droog)":x.mmh<.5?" (licht)":x.mmh<2.5?" (matig)":" (zwaar)")};r.addEventListener("mouseenter",f);r.addEventListener("click",f);s.appendChild(r);
+  if(i%4===0){var tx=document.createElementNS(ns,"text");tx.setAttribute("x",i*bw);tx.setAttribute("y",H+14);tx.setAttribute("font-size","10");tx.setAttribute("style","fill:var(--mute)");tx.textContent=x.time;s.appendChild(tx)}});
+ wrap.appendChild(s);wrap.appendChild(tip);return wrap}
+function wxCard(){var c=el("div",{cls:"card"},[el("h3",{text:S.lang==="nl"?"Weerbericht en neerslag":"Forecast and rain"})]);
+ if(WX.err){c.appendChild(el("p",{cls:"sub",text:"Weer-agent: "+WX.err}));return c}
+ if(!WX.weer&&!WX.regen){c.appendChild(el("p",{cls:"sub",text:"…"}));return c}
+ if(WX.weer){var r=WX.weer.rapport||{};if(r.summary)c.appendChild(el("p",{text:r.summary,style:"font-weight:500"}));if(r.text)c.appendChild(el("p",{cls:"sub",text:r.text}));
+  var row=el("div",{cls:"row"});(WX.weer.dagen||[]).forEach(function(d){var mn=d.mintemperature!=null?d.mintemperature:d.mintemperatureMin,mxx=d.maxtemperature!=null?d.maxtemperature:d.maxtemperatureMax;row.appendChild(el("div",{cls:"day",style:"min-width:92px;flex:1"},[el("b",{text:dn(d.day||d.dag)}),el("div",{text:(mn!=null?mn:"?")+"° / "+(mxx!=null?mxx:"?")+"°"}),el("div",{cls:"sub",text:"regen "+(d.rainChance!=null?d.rainChance+"%":"?")})]))});c.appendChild(row)}
+ if(WX.regen)c.appendChild(rainChart(WX.regen));
+ c.appendChild(el("a",{href:"https://www.buienradar.nl/",target:"_blank",rel:"noopener",text:"Bron: Buienradar ↗",style:"color:var(--acc);font-size:13px"}));return c}
+function vWeer(){var w=el("div",{}),sn=sun();
+ w.appendChild(el("div",{cls:"card"},[el("div",{cls:"row"},[toggle(Object.keys(PL).map(function(k){return[k,k+" "+PL[k][2]]}),S.place,function(v){S.place=v;WX={};save();theme();loadWx();render()})]),el("p",{text:t("sr")+" "+fmt(sn.rise,"Europe/Brussels")+"   "+t("ss")+" "+fmt(sn.set,"Europe/Brussels")})]));
+ w.appendChild(wxCard());
+ var sl=el("select",{onchange:function(){setv("tz",this.value)}},TZ.map(function(z){return el("option",{value:z[1],text:z[0]})}));sl.value=S.tz;
+ var ck=el("div",{cls:"clock",id:"ck"});w.appendChild(el("div",{cls:"card"},[sl,ck]));
+ function tick(){var e=$("#ck");if(e)e.textContent=new Date().toLocaleTimeString("nl-BE",{timeZone:S.tz})}tick();w._tick=tick;return w}
+function vDextra(){
+ var w=el("div",{},[el("h1",{text:greet(),style:"font-size:clamp(30px,5vw,48px)"}),el("p",{cls:"sub",text:new Date().toLocaleDateString(S.lang==="nl"?"nl-BE":"en-GB",{weekday:"long",day:"numeric",month:"long",timeZone:"Europe/Brussels"})})]);
+ var ms=el("div",{cls:"msgs",id:"msgs"},S.chat.map(function(m,i){var d=el("div",{cls:"m "+m.r,text:m.t});if(m.x)d.appendChild(el("small",{cls:"sub",text:m.x}));if(m.r==="a")d.appendChild(el("small",{},[el("button",{cls:"x1",text:"☆ "+t("save"),onclick:function(){S.mem.push((S.chat[i-1]?S.chat[i-1].t+" → ":"")+m.t);S.mem=S.mem.slice(-40);save();this.textContent="★ "+t("mem")}})]));return d}));
+ if(busy)ms.appendChild(el("div",{cls:"m a sub",text:t("think")}));
+ var inp=el("input",{placeholder:t("ask"),id:"inp"}),fi=el("input",{type:"file",multiple:"",style:"display:none",onchange:function(){files=files.concat([].slice.call(this.files));render()}});
+ inp.addEventListener("keydown",function(e){if(e.key==="Enter"){var v=inp.value;inp.value="";send(v)}});
+ var bar=el("div",{cls:"compose"},[el("button",{cls:"x1",text:"＋",title:t("att"),style:"font-size:22px",onclick:function(){fi.click()}}),inp,fi,el("button",{cls:"round",text:"↑",onclick:function(){var v=inp.value;inp.value="";send(v)}})]);
+ w.appendChild(bar);if(files.length)w.appendChild(el("p",{cls:"sub",text:files.length+" "+t("files")+": "+files.map(function(f){return f.name}).join(", ")}));
+ w.appendChild(ms);
+ var has=S.brief&&S.brief.date===iso(new Date());
+ var bc=el("div",{cls:"card"},[el("h3",{text:t("brief")}),el("p",{text:has?S.brief.text:"",cls:has?"":"sub",style:"white-space:pre-wrap"}),el("div",{cls:"row"},[el("button",{cls:"btn s",text:t("gen"),onclick:function(){briefing("m")}}),el("button",{cls:"ghost",text:t("gen2"),onclick:function(){briefing("e")}})])]);
+ var wx=vWeer();w.appendChild(wx);w._tick=wx._tick;w.appendChild(bc);return w}
+function vNews(){var w=el("div",{},[el("h1",{text:t("Nieuws")}),el("button",{cls:"btn",text:S.lang==="nl"?"Haal nieuws op":"Fetch news",onclick:loadNews,style:"margin-top:12px"})]);
+ if(busy)w.appendChild(el("p",{cls:"sub",text:t("think")}));
+ if(S.news&&S.news.summary)w.appendChild(el("div",{cls:"card"},[el("p",{text:S.news.summary})]));
+ (S.news&&S.news.words||[]).forEach(function(x){w.appendChild(el("div",{cls:"card"},[el("h3",{text:x.word}),el("p",{text:x.explanation})]))});
+ (S.news&&S.news.items||[]).forEach(function(n){w.appendChild(el("div",{cls:"card"},[el("h3",{text:n.title,style:"font-size:17px"}),el("p",{cls:"sub",text:n.summary||""}),el("a",{href:/^https:\/\//.test(n.url)?n.url:"#",target:"_blank",rel:"noopener",text:(n.source||"bron")+" ↗",style:"color:var(--acc)"})]))});
+ return w}
+function vTaken(){var w=el("div",{},[el("h1",{text:t("Taken")})]),i=el("input",{placeholder:t("task"),style:"flex:1"});
+ var sel=el("select",{},[el("option",{value:"school",text:t("school")}),el("option",{value:"private",text:t("priv")})]);
+ function go(){if(!i.value.trim())return;S.tasks.push({title:i.value.trim(),kind:sel.value,done:false});save();render()}
+ i.addEventListener("keydown",function(e){if(e.key==="Enter")go()});
+ w.appendChild(el("div",{cls:"row",style:"margin:14px 0"},[i,sel,el("button",{cls:"btn",text:t("add"),onclick:go})]));
+ var c=el("div",{cls:"card"});S.tasks.forEach(function(x,n){var cb=el("input",{type:"checkbox",onchange:function(){x.done=!x.done;save();render()}});cb.checked=!!x.done;c.appendChild(el("div",{cls:"li"+(x.done?" done":"")},[cb,el("span",{text:x.title}),el("div",{cls:"chips"},[el("span",{text:t(x.kind==="school"?"school":"priv")})]),el("button",{cls:"x1",text:"✕",onclick:function(){S.tasks.splice(n,1);save();render()}})]))});
+ w.appendChild(c);return w}
+function vMail(){return el("div",{},[el("h1",{text:t("Mail")}),el("div",{cls:"card"},[el("p",{text:t("mailt")})])])}
+function vAgenda(){var w=el("div",{},[el("div",{cls:"top"},[el("h1",{text:t("Agenda")}),toggle([["week",t("week")],["month",t("month")]],S.cal,function(v){off=0;setv("cal",v)})])]),n=new Date(),base,start,cnt,label;
+ if(S.cal==="month"){base=new Date(n.getFullYear(),n.getMonth()+off,1);var sh=(base.getDay()+6)%7;start=new Date(base.getFullYear(),base.getMonth(),1-sh);cnt=42;label=base.toLocaleDateString(S.lang==="nl"?"nl-BE":"en-GB",{month:"long",year:"numeric"})}
+ else{var sh2=(n.getDay()+6)%7;start=new Date(n.getFullYear(),n.getMonth(),n.getDate()-sh2+off*7);cnt=7;label=iso(start)}
+ w.appendChild(el("div",{cls:"row",style:"margin:12px 0"},[el("button",{cls:"ghost",text:"‹",onclick:function(){off--;render()}}),el("b",{text:label}),el("button",{cls:"ghost",text:"›",onclick:function(){off++;render()}}),el("button",{cls:"ghost",text:"•",onclick:function(){off=0;render()}})]));
+ var g=el("div",{cls:"grid"}),dnm=S.lang==="nl"?["ma","di","wo","do","vr","za","zo"]:["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];dnm.forEach(function(d){g.appendChild(el("b",{cls:"sub",text:d}))});
+ for(var i=0;i<cnt;i++){var d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i),k=iso(d),dv=el("div",{cls:"day"+(k===iso(n)?" today":"")+(S.cal==="month"&&d.getMonth()!==base.getMonth()?" x":"")},[el("div",{text:String(d.getDate())})]);
+  (function(k,dv){S.events.forEach(function(e,ix){if(e.date===k)dv.appendChild(el("div",{cls:"ev",text:(e.time?e.time+" ":"")+e.title,title:e.title,onclick:function(){if(confirm("Verwijderen? / Delete?")){S.events.splice(ix,1);save();render()}}}))})})(k,dv);g.appendChild(dv)}
+ w.appendChild(g);
+ var ti=el("input",{placeholder:t("ev"),style:"flex:1"}),di=el("input",{type:"date",value:iso(n)}),tm=el("input",{type:"time"});
+ w.appendChild(el("div",{cls:"row",style:"margin-top:14px"},[ti,di,tm,el("button",{cls:"btn",text:t("add"),onclick:function(){if(ti.value&&di.value){S.events.push({title:ti.value,date:di.value,time:tm.value});save();render()}}})]));return w}
+function panel(){var p=$("#set");p.textContent="";
+ p.appendChild(el("div",{cls:"top"},[el("h2",{text:t("set")}),el("button",{cls:"ghost",text:"✕",onclick:function(){p.classList.remove("open")}})]));
+ function sec(h,node){p.appendChild(el("h3",{text:h}));p.appendChild(node)}
+ sec(t("lang"),toggle([["nl","Nederlands"],["en","English"]],S.lang,function(v){setv("lang",v);panel()}));
+ sec(t("tone"),toggle([["dry",t("dry")],["loose",t("loose")]],S.tone,function(v){S.tone=v;save();panel()}));
+ sec(t("theme"),toggle([["auto",t("auto")],["light",t("light")],["dark",t("dark")]],S.theme,function(v){S.theme=v;save();theme();panel()}));
+ var ag=el("div",{},S.agents.length?S.agents.map(function(a,i){return el("div",{cls:"li"},[el("span",{text:a.name+(a.job?": "+a.job:"")}),el("button",{cls:"x1",text:"✕",onclick:function(){S.agents.splice(i,1);save();panel()}})])}):[el("p",{cls:"sub",text:t("noag")})]);
+ AG.slice().reverse().forEach(function(a){ag.insertBefore(el("div",{cls:"li"},[el("span",{text:(a.on?"● ":"○ ")+a.name+": "+a.job})]),ag.firstChild)});sec(t("agents"),ag);
+ var da=el("input",{placeholder:t("abbr"),style:"width:90px"}),dm=el("input",{placeholder:t("mean"),style:"flex:1;min-width:0"}),dl=el("div",{},S.dict.map(function(d,i){return el("div",{cls:"li"},[el("span",{text:d.a+" = "+d.m}),el("button",{cls:"x1",text:"✕",onclick:function(){S.dict.splice(i,1);save();panel()}})])}));
+ sec(t("dict"),el("div",{},[dl,el("div",{cls:"row",style:"margin-top:8px"},[da,dm,el("button",{cls:"btn",text:"+",onclick:function(){if(da.value){S.dict.push({a:da.value,m:dm.value});save();panel()}}})])]));
+ var ni=el("input",{placeholder:t("notes"),style:"flex:1;min-width:0"}),nl=el("div",{},S.notes.map(function(n,i){return el("div",{cls:"li"},[el("span",{text:(i+1)+". "+n}),el("button",{cls:"x1",text:"✕",onclick:function(){S.notes.splice(i,1);save();panel()}})])}));
+ ni.addEventListener("keydown",function(e){if(e.key==="Enter"&&ni.value){S.notes.push(ni.value);save();panel()}});
+ sec(t("notes"),el("div",{},[nl,el("div",{cls:"row",style:"margin-top:8px"},[ni,el("button",{cls:"ghost",text:t("copy"),onclick:function(){var s=S.notes.map(function(n,i){return(i+1)+". "+n}).join("\n");try{navigator.clipboard.writeText(s)}catch(e){}}})])]));
+ p.appendChild(el("p",{}));p.appendChild(el("button",{cls:"btn",text:"⟳ "+t("sync"),onclick:function(){location.reload()}}))}
+var V={Dextra:vDextra,Nieuws:vNews,Taken:vTaken,Mail:vMail,Agenda:vAgenda};
+function render(){var nv=$("#nav");nv.textContent="";nv.appendChild(el("div",{cls:"logo",text:"Dextra"}));
+ Object.keys(V).forEach(function(k){nv.appendChild(el("button",{cls:tab===k?"on":"",text:t(k),onclick:function(){tab=k;off=0;render()}}))});
+ nv.appendChild(el("button",{text:"⚙ "+t("set"),style:"margin-top:auto;all:unset;cursor:pointer;padding:10px 12px;color:var(--mute)",onclick:function(){panel();$("#set").classList.add("open")}}));
+ var m=$("#main");m.textContent="";var v=V[tab]();m.appendChild(v);document.documentElement.lang=S.lang;if(tab==="Dextra"){var x=$("#msgs");if(x)x.scrollTop=x.scrollHeight}
+ clearInterval(render.i);if(v._tick)render.i=setInterval(v._tick,1000)}
+try{var ls=localStorage.getItem("dextra");if(ls)merge(JSON.parse(ls))}catch(e){}
+theme();render();setInterval(theme,6e4);
+(async function(){try{var r=await api("/api/state");if(r&&r.state){merge(r.state);try{localStorage.setItem("dextra",JSON.stringify(S))}catch(e){}theme();render()}}catch(e){}loadWx()})();
+setInterval(loadWx,3e5);
+})();
+</script>
+</body>
+</html>
