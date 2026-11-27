@@ -1,0 +1,9 @@
+{
+  "name": "Dextra",
+  "short_name": "Dextra",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1b2220",
+  "theme_color": "#116466",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
