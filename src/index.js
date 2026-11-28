@@ -51,17 +51,30 @@ async function regen(place) {
   return { bron: "Buienradar", place, data };
 }
 
+// Standaard gratis via Cloudflare Workers AI. Met een ANTHROPIC_API_KEY (betaald) gebruikt hij Claude.
 async function chat(env, prompt) {
-  if (!env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY ontbreekt in Cloudflare");
   if (typeof prompt !== "string" || !prompt || prompt.length > 40000) throw new Error("ongeldige vraag");
-  const r = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model: "claude-sonnet-5-5", max_tokens: 900, messages: [{ role: "user", content: prompt }] }),
-  });
-  const j = await r.json();
-  if (!r.ok) throw new Error((j.error && j.error.message) || "Claude API status " + r.status);
-  return j.content.filter((c) => c.type === "text").map((c) => c.text).join("");
+  if (env.ANTHROPIC_API_KEY) {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+      body: JSON.stringify({ model: "claude-sonnet-5-5", max_tokens: 900, messages: [{ role: "user", content: prompt }] }),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error((j.error && j.error.message) || "Claude API status " + r.status);
+    return j.content.filter((c) => c.type === "text").map((c) => c.text).join("");
+  }
+  if (!env.AI) throw new Error("geen AI gekoppeld (binding AI ontbreekt)");
+  const models = [env.AI_MODEL || "@cf/meta/llama-3.3-70b-instruct-fp8-fast", "@cf/meta/llama-3.1-8b-instruct"];
+  let last;
+  for (const m of models) {
+    try {
+      const r = await env.AI.run(m, { messages: [{ role: "user", content: prompt }], max_tokens: 900 });
+      let t = typeof r === "string" ? r : r && (r.response ?? (r.choices && r.choices[0] && r.choices[0].message && r.choices[0].message.content));
+      if (t) return typeof t === "string" ? t : JSON.stringify(t);
+    } catch (e) { last = e; }
+  }
+  throw new Error("Workers AI: " + ((last && last.message) || "geen antwoord"));
 }
 
 export default {
@@ -69,7 +82,7 @@ export default {
     const u = new URL(req.url);
     if (!u.pathname.startsWith("/api/")) return env.ASSETS.fetch(req);
     try {
-      if (u.pathname === "/api/status") return J({ pin: !!env.DEXTRA_PIN, key: !!env.ANTHROPIC_API_KEY, kv: !!env.STATE });
+      if (u.pathname === "/api/status") return J({ pin: !!env.DEXTRA_PIN, ai: !!env.AI, claudeKey: !!env.ANTHROPIC_API_KEY, kv: !!env.STATE });
       if (!env.DEXTRA_PIN) return J({ error: "DEXTRA_PIN ontbreekt in Cloudflare" }, 503);
       if (req.headers.get("x-pin") !== env.DEXTRA_PIN) return J({ error: "PIN onjuist" }, 401);
       switch (u.pathname) {
