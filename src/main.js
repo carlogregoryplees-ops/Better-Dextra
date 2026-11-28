@@ -1,19 +1,19 @@
 import base from "./index.js";
 
-const VERSIE = "2026-11-28-a";
+const VERSIE = "2026-11-28-b";
 const J = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
 
 // Chat via Google Gemini (gratis niveau). Zonder GEMINI_API_KEY valt alles terug op index.js.
 async function gemini(env, prompt) {
   if (typeof prompt !== "string" || !prompt || prompt.length > 60000) throw new Error("ongeldige vraag");
-  const models = [env.GEMINI_MODEL || "gemini-2.5-flash", "gemini-2.5-flash-lite"];
-  let last;
+  const models = [env.GEMINI_MODEL, "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash"].filter(Boolean);
+  const errs = [];
   for (const m of models) {
     try {
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
         method: "POST",
         headers: { "x-goog-api-key": env.GEMINI_API_KEY, "content-type": "application/json" },
-        body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: 0.4, maxOutputTokens: 2000 } }),
+        body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: 0.4, maxOutputTokens: 2500 } }),
       });
       const j = await r.json();
       if (!r.ok) throw new Error((j.error && j.error.message) || "status " + r.status);
@@ -21,9 +21,9 @@ async function gemini(env, prompt) {
       const text = parts.map((p) => p.text || "").join("");
       if (text) return text;
       throw new Error("leeg antwoord");
-    } catch (e) { last = e; }
+    } catch (e) { errs.push(m + ": " + String((e && e.message) || e).slice(0, 160)); }
   }
-  throw new Error("Gemini: " + ((last && last.message) || "geen antwoord"));
+  throw new Error("Gemini faalde. " + errs.join(" | "));
 }
 
 export default {
