@@ -1,5 +1,6 @@
 import base from "./index.js";
 
+const VERSIE = "2026-11-28-a";
 const J = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
 
 // Chat via Google Gemini (gratis niveau). Zonder GEMINI_API_KEY valt alles terug op index.js.
@@ -32,6 +33,7 @@ export default {
       const r = await base.fetch(req, env, ctx);
       const j = await r.json();
       j.geminiKey = !!env.GEMINI_API_KEY;
+      j.versie = VERSIE;
       return J(j);
     }
     if (env.GEMINI_API_KEY && u.pathname === "/api/chat" && req.method === "POST") {
